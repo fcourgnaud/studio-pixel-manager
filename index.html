@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="sombre">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio Pixel — Manager</title>
+  <link rel="stylesheet" href="css/manager.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="menu" id="menu" aria-label="Menu principal">
+      <div class="menu-tete">
+        <div class="logo" aria-hidden="true">SP</div>
+        <div class="menu-titre">Studio Pixel<small>Manager</small></div>
+      </div>
+      <nav id="navigation"></nav>
+      <div class="menu-pied">Sauvegardes : voir le tableau de bord.</div>
+    </aside>
+
+    <div class="principal">
+      <header class="barre">
+        <button class="btn icone" id="btn-menu" type="button" title="Replier ou déplier le menu" aria-label="Replier ou déplier le menu">☰</button>
+        <div class="recherche">
+          <label class="ecran-lecteur" for="recherche-globale">Rechercher dans tout le projet</label>
+          <input type="search" id="recherche-globale" placeholder="Rechercher dans tout le projet…">
+        </div>
+        <span class="etat-sauvegarde" id="etat-sauvegarde" aria-live="polite"></span>
+        <button class="btn icone" id="btn-theme" type="button" title="Changer de thème" aria-label="Changer de thème">◑</button>
+        <button class="btn" id="btn-exporter" type="button" title="Télécharger une copie de toutes les données">⤓ <span class="lib-btn">Exporter</span></button>
+        <button class="btn" id="btn-importer" type="button" title="Charger un fichier exporté">⤒ <span class="lib-btn">Importer</span></button>
+        <input type="file" id="fichier-import" accept="application/json,.json" class="cache">
+      </header>
+      <div class="bandeau cache" id="bandeau" role="status"></div>
+      <main class="contenu" id="contenu" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <dialog id="fenetre" aria-labelledby="fenetre-titre"></dialog>
+  <dialog id="confirmation" aria-label="Confirmation" style="width:min(460px, calc(100vw - 24px))"></dialog>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/modele.js"></script>
+  <script src="js/donnees.js"></script>
+  <script src="js/sauvegarde.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
