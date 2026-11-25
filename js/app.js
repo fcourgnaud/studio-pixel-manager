@@ -237,6 +237,7 @@
     module.champs.forEach(function (c) {
       var v = fiche[c.cle];
       if (c.type === 'choix' && v && c.cle !== module.groupe) meta.push('<span class="etiquette">' + esc(v) + '</span>');
+      if (c.type === 'script' && v) meta.push('<span class="etiquette">📜 Script</span>');
       if (c.type === 'liens' && lignes(v).length) meta.push('<span class="etiquette">🔗 ' + lignes(v).length + '</span>');
       if (c.type === 'lien' && v && M.estLienSur(v)) meta.push('<a class="etiquette" href="' + esc(v) + '" target="_blank" rel="noopener" data-action="lien">🔗 ' + esc(c.libelle) + '</a>');
       if (c.type === 'montant' && v !== '' && v != null) meta.push('<span class="etiquette">' + euros(v) + '</span>');
@@ -454,6 +455,9 @@
       case 'copiable':
         return lab + '<textarea id="' + id + '" name="' + nom + '" style="min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:13px">' + esc(valeur) + '</textarea>' +
           '<div class="aide"><button type="button" class="btn petit" data-action="copier-champ" data-champ="' + c.cle + '">⧉ Copier</button> À coller dans Claude Code.</div>';
+      case 'script':
+        return lab + '<textarea id="' + id + '" name="' + nom + '" style="min-height:260px;line-height:1.5" placeholder="Actions et répliques de la scène, comme dans le document « Script » du Drive">' + esc(valeur) + '</textarea>' +
+          '<div class="aide"><button type="button" class="btn petit" data-action="copier-champ" data-champ="' + c.cle + '">⧉ Copier le script</button></div>';
       case 'choix':
         return lab + '<select id="' + id + '" name="' + nom + '"><option value="">—</option>' + c.options.map(function (o) {
           return '<option' + (o === valeur ? ' selected' : '') + '>' + esc(o) + '</option>';

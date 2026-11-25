@@ -28,7 +28,8 @@
    * date, choix (liste fermée), lien (une adresse), liens (plusieurs adresses,
    * une par ligne), image, images, audio, couleurs (codes #RRGGBB),
    * reference (une fiche d'un autre module), references (plusieurs fiches),
-   * copiable (texte long avec un bouton « Copier »).
+   * copiable (texte long avec un bouton « Copier »),
+   * script (texte long du script d'une scène, grande zone avec un bouton « Copier »).
    */
   var MODULES = [
     {
@@ -52,6 +53,8 @@
         { cle: 'chapitre', libelle: 'Chapitre', type: 'texte' },
         { cle: 'ordre', libelle: 'Ordre', type: 'nombre' },
         { cle: 'resume', libelle: 'Résumé', type: 'zone' },
+        { cle: 'description', libelle: 'Description de la scène', type: 'zone' },
+        { cle: 'script', libelle: 'Script (déroulé, actions et répliques)', type: 'script' },
         { cle: 'dialogues', libelle: 'Dialogues', type: 'zone' },
         { cle: 'decors', libelle: 'Décors', type: 'references', module: 'decors' },
         { cle: 'personnages', libelle: 'Personnages', type: 'references', module: 'personnages' },
