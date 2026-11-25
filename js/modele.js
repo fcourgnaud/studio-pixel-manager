@@ -602,11 +602,16 @@
    *   « # Prologue … »       → le prologue (cinématique d'introduction) ;
    *   « ## Étape N — … »     → un chapitre ;
    *   « ### N. Titre »       → une scène de ce chapitre.
+   * Seuls le prologue et la partie « # Script » sont lus : tout autre titre de
+   * premier niveau (autre onglet du Doc, comme « Animations de scène ») ferme la
+   * lecture jusqu'au prochain « # Script ». Les titres « # Tab 1 » ne changent rien.
    * Même règle que Outils/synchroniser_script.py (tâche planifiée).
    * Renvoie { prologue: texte ou '', chapitres: { N: [[numero, texte], …] } }.
    */
   var RE_PROLOGUE = /^#\s+(?:\*\*)?\s*Prologue\b/;
   var RE_TITRE1 = /^#\s/;
+  var RE_SCRIPT = /^#\s+(?:\*\*)?\s*Script\b/;
+  var RE_ONGLET_PAR_DEFAUT = /^#\s+(?:\*\*)?\s*Tab\s+\d+\s*(?:\*\*)?\s*$/;
   var RE_CHAPITRE = /^##\s+(?:\*\*)?\s*Étape\s+(\d+)\b/;
   var RE_SCENE = /^###\s+(?:\*\*)?\s*(\d+)\.\s/;
 
@@ -617,6 +622,7 @@
     t = t.split('**').join('');                  // gras
     t = t.replace(/(?<![\p{L}\p{N}_*])\*(?!\s)(.+?)(?<!\s)\*(?![\p{L}\p{N}_*])/gu, '$1'); // italique
     t = t.replace(/\\([!\\*_#\[\]().>`-])/g, '$1'); // caractères échappés
+    t = t.trim().replace(/^\*+|\*+$/g, '');      // astérisques orphelins (italique mal fermé dans le Doc)
     return t.trim();
   }
 
@@ -628,11 +634,18 @@
 
   function decouperScript(markdown) {
     var res = { prologue: '', chapitres: {} };
-    var prologue = null, chapitre = null, scene = null;
-    function fermerPrologue() { if (prologue) res.prologue = assembler(prologue); prologue = null; }
+    var prologue = null, chapitre = null, scene = null, prologueLu = false;
+    var lire = true; // vrai dans la partie « Script » (ou en tête d'un fichier sans titre « # Script »)
+    function fermerPrologue() { if (prologue) { res.prologue = assembler(prologue); prologueLu = true; } prologue = null; }
     String(markdown || '').replace(/\r\n?/g, '\n').split('\n').forEach(function (ligne) {
-      if (RE_PROLOGUE.test(ligne)) { prologue = [texteSimple(ligne)]; chapitre = null; scene = null; return; }
-      if (RE_TITRE1.test(ligne)) { fermerPrologue(); return; }
+      if (RE_PROLOGUE.test(ligne) && !prologueLu && !prologue) { prologue = [texteSimple(ligne)]; lire = false; chapitre = null; scene = null; return; }
+      if (RE_TITRE1.test(ligne)) {
+        fermerPrologue();
+        if (RE_ONGLET_PAR_DEFAUT.test(ligne.trim())) return;
+        lire = RE_SCRIPT.test(ligne); chapitre = null; scene = null;
+        return;
+      }
+      if (!lire && !prologue) return;
       var m = RE_CHAPITRE.exec(ligne);
       if (m) { fermerPrologue(); chapitre = Number(m[1]); res.chapitres[chapitre] = res.chapitres[chapitre] || []; scene = null; return; }
       m = RE_SCENE.exec(ligne);
