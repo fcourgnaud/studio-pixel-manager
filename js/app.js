@@ -162,12 +162,38 @@
   }
 
   function afficherMenu() {
-    el.nav.innerHTML = M.MODULES.map(function (m) {
-      var nb = m.id === 'tableau' ? '' : etat.collections[m.id].length;
-      return '<a href="#/' + m.id + '" class="' + (m.id === ui.module && !ui.recherche ? 'actif' : '') + '" title="' + esc(m.titre) + '">' +
-        '<span class="ico" aria-hidden="true">' + m.icone + '</span><span class="lib">' + esc(m.titre) + '</span>' +
-        '<span class="nb">' + nb + '</span></a>';
+    // Le menu suit l'ordre du travail : pilotage, puis l'histoire, la production et la fabrication.
+    el.nav.innerHTML = M.SECTIONS.map(function (sec) {
+      var modules = M.MODULES.filter(function (m) { return m.section === sec.id; });
+      return '<div class="menu-section">' + esc(sec.titre) + '</div>' + modules.map(function (m) {
+        var nb = m.id === 'tableau' ? '' : etat.collections[m.id].length;
+        return '<a href="#/' + m.id + '" class="' + (m.id === ui.module && !ui.recherche ? 'actif' : '') + '" title="' + esc(m.titre) + '">' +
+          '<span class="ico" aria-hidden="true">' + m.icone + '</span><span class="lib">' + esc(m.titre) + '</span>' +
+          '<span class="nb">' + nb + '</span></a>';
+      }).join('');
     }).join('');
+  }
+
+  // Le circuit du projet, affiché en haut du tableau de bord et du scénario :
+  // on écrit dans le Drive, le Manager en garde une copie, Claude Code fabrique le jeu.
+  function blocCircuit(complet) {
+    var liens = M.liensScript(etat);
+    var etapes = [
+      ['✎', 'Tu écris le Script', 'dans le Drive'],
+      ['⟳', 'Le Manager en garde une copie', 'automatique toutes les 2 h, ou bouton'],
+      ['⌘', 'Claude Code fabrique le jeu', 'conversation Développement'],
+      ['▶', 'Unity : on joue et on teste', 'sur ton Mac']
+    ];
+    return '<div class="circuit">' +
+      (complet ? '<div class="circuit-etapes">' + etapes.map(function (e, i) {
+        return (i ? '<span class="circuit-fleche" aria-hidden="true">→</span>' : '') +
+          '<div class="circuit-etape"><span class="ico" aria-hidden="true">' + e[0] + '</span><strong>' + esc(e[1]) + '</strong><small>' + esc(e[2]) + '</small></div>';
+      }).join('') + '</div>' : '') +
+      '<div class="circuit-actions">' +
+      (liens ? '<a class="btn" href="' + esc(liens.ouvrir) + '" target="_blank" rel="noopener">✎ Ouvrir le Script</a>' : '') +
+      '<button type="button" class="btn primaire" data-action="synchro-script">⟳ Synchroniser le script</button>' +
+      '<span class="aide">' + (etat.reglages.derniereSynchro ? 'Dernière synchronisation par le bouton : ' + esc(dateFr(etat.reglages.derniereSynchro)) + ' à ' + esc(heureFr(etat.reglages.derniereSynchro)) + '.' : 'Le texte des scènes se modifie dans le Drive, jamais ici.') + '</span>' +
+      '</div></div>';
   }
 
   function appliquerApparence() {
@@ -211,7 +237,7 @@
 
   function vueModule(module) {
     var fiches = fichesFiltrees(module);
-    var html = enteteModule(module) + barreOutils(module, etat.collections[module.id].length);
+    var html = enteteModule(module) + (module.id === 'scenario' ? blocCircuit(false) : '') + barreOutils(module, etat.collections[module.id].length);
 
     if (module.dependances) html += blocDependances();
     if (module.comparer && ui.comparaison.length) html += blocComparaison(module);
@@ -348,6 +374,7 @@
     var missions = M.trierFiches(etat.collections.developpement.filter(function (f) { return f.statut === 'en_cours' || f.statut === 'a_faire' || f.statut === 'a_valider'; }));
 
     var html = '<h1>' + esc(p.nom || 'Projet sans nom') + '</h1><p class="sous-titre">' + esc(p.genre) + '</p>';
+    html += blocCircuit(true);
 
     html += '<div class="indicateurs">' +
       '<div class="carte indicateur"><div class="valeur">' + av.global.pourcentage + ' %</div><div class="legende">De la production validée · barre : validé, à valider, en cours</div>' + barreProgres(av.global) + '</div>' +
@@ -456,7 +483,10 @@
         return lab + '<textarea id="' + id + '" name="' + nom + '" style="min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:13px">' + esc(valeur) + '</textarea>' +
           '<div class="aide"><button type="button" class="btn petit" data-action="copier-champ" data-champ="' + c.cle + '">⧉ Copier</button> À coller dans Claude Code.</div>';
       case 'script':
-        return lab + '<textarea id="' + id + '" name="' + nom + '" style="min-height:260px;line-height:1.5" placeholder="Actions et répliques de la scène, comme dans le document « Script » du Drive">' + esc(valeur) + '</textarea>' +
+        // Copie du Drive : on la lit ici, on la modifie dans le Script.
+        return lab + '<div class="info-boite" style="margin:4px 0 8px">Ce texte vient du Script du Drive. Pour le changer, écris dans le Script, puis clique sur « Synchroniser le script ». ' +
+          (M.liensScript(etat) ? '<a href="' + esc(M.liensScript(etat).ouvrir) + '" target="_blank" rel="noopener">Ouvrir le Script ↗</a>' : '') + '</div>' +
+          '<textarea id="' + id + '" name="' + nom + '" readonly style="min-height:260px;line-height:1.5;opacity:.9;cursor:default" placeholder="Pas encore de texte : il arrivera à la prochaine synchronisation.">' + esc(valeur) + '</textarea>' +
           '<div class="aide"><button type="button" class="btn petit" data-action="copier-champ" data-champ="' + c.cle + '">⧉ Copier le script</button></div>';
       case 'choix':
         return lab + '<select id="' + id + '" name="' + nom + '"><option value="">—</option>' + c.options.map(function (o) {
@@ -632,7 +662,7 @@
 
   function ouvrirProjet() {
     var p = etat.projet;
-    var champs = [['nom', 'Nom du jeu'], ['genre', 'Genre'], ['phase', 'Phase'], ['dureeCible', 'Durée cible'], ['moteur', 'Moteur'], ['resume', 'Résumé']];
+    var champs = [['nom', 'Nom du jeu'], ['genre', 'Genre'], ['phase', 'Phase'], ['dureeCible', 'Durée cible'], ['moteur', 'Moteur'], ['scriptDrive', 'Adresse du Script (Google Doc)'], ['resume', 'Résumé']];
     el.fenetre.innerHTML = '<form method="dialog" id="formulaire-projet"><div class="dlg-tete"><h3 id="fenetre-titre">Le projet</h3><button type="button" class="btn icone" data-action="fermer" aria-label="Fermer">✕</button></div><div class="dlg-corps">' +
       champs.map(function (c) {
         return '<div class="champ"><label for="p-' + c[0] + '">' + c[1] + '</label>' + (c[0] === 'resume'
@@ -640,6 +670,54 @@
           : '<input type="text" id="p-' + c[0] + '" name="' + c[0] + '" value="' + esc(p[c[0]]) + '">') + '</div>';
       }).join('') + '</div><div class="dlg-pied"><span class="espace"></span><button type="button" class="btn" data-action="fermer">Annuler</button><button type="submit" class="btn primaire">Enregistrer</button></div></form>';
     el.fenetre.showModal();
+  }
+
+  // ------------------------------------------------------------ Synchroniser le script
+
+  // Le navigateur n'a pas le droit de lire directement un Google Doc privé :
+  // on télécharge le Script (clic 1), puis on le donne au Manager (clic 2).
+  function ouvrirSynchroScript() {
+    var liens = M.liensScript(etat);
+    el.fenetre.innerHTML = '<div class="dlg-tete"><h3 id="fenetre-titre">⟳ Synchroniser le script</h3><button type="button" class="btn icone" data-action="fermer" aria-label="Fermer">✕</button></div>' +
+      '<div class="dlg-corps">' +
+      '<p>Le Manager recopie le texte de ton Script dans les scènes. Rien d\'autre ne change.</p>' +
+      '<ol class="etapes-synchro">' +
+      '<li><strong>Télécharge le Script.</strong> Le fichier du Script (terminé par « .md ») arrive dans tes Téléchargements.<br>' +
+      (liens ? '<a class="btn" href="' + esc(liens.telecharger) + '" target="_blank" rel="noopener">⤓ Télécharger le Script</a>'
+        : '<span class="aide">Adresse du Script inconnue : renseigne-la dans « Le projet » (tableau de bord, bouton Modifier).</span>') + '</li>' +
+      '<li><strong>Donne-le au Manager.</strong> Choisis le fichier que tu viens de télécharger.<br>' +
+      '<button type="button" class="btn primaire" data-action="synchro-choisir">Choisir le fichier…</button>' +
+      '<input type="file" id="fichier-script" accept=".md,text/markdown,text/plain" class="cache"></li>' +
+      '</ol><div id="resultat-synchro" aria-live="polite"></div>' +
+      '<p class="aide">Sans le bouton, la copie se fait aussi toute seule toutes les deux heures, de 8 h à 22 h.</p>' +
+      '</div><div class="dlg-pied"><span class="espace"></span><button type="button" class="btn" data-action="fermer">Fermer</button></div>';
+    el.fenetre.showModal();
+    el.fenetre.querySelector('#fichier-script').addEventListener('change', function (e) {
+      var fichier = e.target.files && e.target.files[0];
+      if (!fichier) return;
+      var lecteur = new FileReader();
+      lecteur.onload = function () { appliquerSynchroScript(String(lecteur.result)); };
+      lecteur.onerror = function () { toast('Lecture du fichier impossible.', true); };
+      lecteur.readAsText(fichier);
+    });
+  }
+
+  function appliquerSynchroScript(markdown) {
+    var zone = el.fenetre.querySelector('#resultat-synchro');
+    var r;
+    try { r = M.synchroniserScript(etat, markdown); } catch (err) {
+      if (zone) zone.innerHTML = '<div class="alerte-boite">' + esc(err.message) + '</div>';
+      return;
+    }
+    etat.reglages.derniereSynchro = new Date().toISOString();
+    sauver();
+    afficher();
+    var html = r.changements.length
+      ? '<div class="info-boite"><strong>C\'est fait : ' + r.changements.length + ' scène' + (r.changements.length > 1 ? 's' : '') + ' mise' + (r.changements.length > 1 ? 's' : '') + ' à jour.</strong><br>' + r.changements.map(esc).join('<br>') + '</div>'
+      : '<div class="info-boite"><strong>Tout était déjà à jour.</strong> Aucune scène n\'a changé.</div>';
+    if (r.nonTrouvees.length) html += '<p class="aide">Sans fiche dans le Manager (rien n\'est créé tout seul) : ' + r.nonTrouvees.map(esc).join(', ') + '.</p>';
+    if (zone) zone.innerHTML = html;
+    toast(r.changements.length ? 'Script synchronisé.' : 'Le Manager était déjà à jour.');
   }
 
   function ouvrirOutils() {
@@ -1004,6 +1082,8 @@
         if (champUrl && champUrl.value.trim()) ajouterMedia(cible.getAttribute('data-champ'), champUrl.value.trim());
         break;
       case 'modifier-projet': ouvrirProjet(); break;
+      case 'synchro-script': ouvrirSynchroScript(); break;
+      case 'synchro-choisir': el.fenetre.querySelector('#fichier-script').click(); break;
       case 'modifier-outils': ouvrirOutils(); break;
       case 'exporter': exporter(); break;
       case 'copier-donnees': copier(M.exporterJSON(etat)); break;
@@ -1054,7 +1134,7 @@
     if (form.id === 'formulaire-fiche') { enregistrerFiche(); return; }
     if (form.id === 'formulaire-github') { connecterGithub(form); return; }
     if (form.id === 'formulaire-projet') {
-      ['nom', 'genre', 'phase', 'dureeCible', 'moteur', 'resume'].forEach(function (k) { etat.projet[k] = form.elements[k].value.trim(); });
+      ['nom', 'genre', 'phase', 'dureeCible', 'moteur', 'scriptDrive', 'resume'].forEach(function (k) { etat.projet[k] = form.elements[k].value.trim(); });
       sauver(); el.fenetre.close(); afficher(); toast('Projet enregistré.');
       return;
     }

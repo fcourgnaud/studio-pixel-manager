@@ -273,3 +273,24 @@ dialog::backdrop { background: rgba(5, 6, 12, .6); }
   .etat-sauvegarde { display: none; }
   .barre .lib-btn { display: none; }
 }
+
+/* Menu en rubriques, dans l'ordre du travail */
+.menu nav .menu-section { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--texte-2); padding: 12px 10px 4px; }
+.menu nav .menu-section:first-child { padding-top: 4px; }
+.app.replie .menu nav .menu-section { display: none; }
+@media (max-width: 800px) { .app.replie .menu nav .menu-section { display: revert; } }
+
+/* Le circuit du projet : Drive → Manager → Claude Code → Unity */
+.circuit { border: 1px solid var(--bord, rgba(127,127,127,.3)); border-radius: 12px; padding: 12px 14px; margin: 4px 0 16px; background: var(--carte); }
+.circuit-etapes { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.circuit-etape { flex: 1 1 150px; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.circuit-etape .ico { font-size: 18px; }
+.circuit-etape small { color: var(--texte-2); font-size: 12px; }
+.circuit-fleche { align-self: center; color: var(--texte-2); font-size: 18px; }
+.circuit-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.circuit-actions .aide { color: var(--texte-2); font-size: 13px; }
+@media (max-width: 700px) { .circuit-fleche { display: none; } }
+
+/* Fenêtre « Synchroniser le script » */
+.etapes-synchro { padding-left: 20px; display: flex; flex-direction: column; gap: 14px; }
+.etapes-synchro .btn { margin-top: 6px; }

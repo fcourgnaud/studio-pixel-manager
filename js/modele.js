@@ -23,6 +23,30 @@
   ];
 
   /*
+   * Les rubriques du menu, dans l'ordre du travail :
+   * on écrit l'histoire (Drive), on prépare la production, Claude Code fabrique le jeu.
+   */
+  var SECTIONS = [
+    { id: 'pilotage', titre: 'Pilotage' },
+    { id: 'histoire', titre: '1 · L\'histoire (copie du Drive)' },
+    { id: 'production', titre: '2 · Préparer la production' },
+    { id: 'fabrication', titre: '3 · Fabriquer le jeu (Claude Code)' }
+  ];
+
+  /*
+   * Adresses du Script sur Google Drive (le document qui fait foi pour le texte des scènes).
+   * L'adresse est rangée dans les données du projet (projet.scriptDrive), jamais dans le code :
+   * la version publique du Manager ne contient aucune donnée du jeu.
+   * Renvoie { ouvrir, telecharger } ou null si l'adresse n'est pas renseignée.
+   */
+  function liensScript(etat) {
+    var m = /\/document\/d\/([\w-]{20,})/.exec(String((etat && etat.projet && etat.projet.scriptDrive) || ''));
+    if (!m) return null;
+    var base = 'https://docs.google.com/document/d/' + m[1];
+    return { ouvrir: base + '/edit', telecharger: base + '/export?format=md' };
+  }
+
+  /*
    * Description des modules.
    * Types de champs : texte, zone (texte long), nombre, montant (euros),
    * date, choix (liste fermée), lien (une adresse), liens (plusieurs adresses,
@@ -33,7 +57,7 @@
    */
   var MODULES = [
     {
-      id: 'tableau', titre: 'Tableau de bord', icone: '◈', vue: 'tableau',
+      id: 'tableau', section: 'pilotage', titre: 'Tableau de bord', icone: '◈', vue: 'tableau',
       description: 'Vue d\'ensemble du projet, et registre des décisions.',
       nomFiche: 'décision',
       champs: [
@@ -45,8 +69,8 @@
       ]
     },
     {
-      id: 'scenario', titre: 'Scénario', icone: '✎', vue: 'liste', groupe: 'chapitre',
-      description: 'Chapitres, scènes, dialogues et notes. Le script sur Drive fait foi.',
+      id: 'scenario', section: 'histoire', titre: 'Scénario', icone: '✎', vue: 'liste', groupe: 'chapitre',
+      description: 'Les scènes du jeu. Leur texte est une copie du Script : on l\'écrit dans le Drive, puis on clique sur « Synchroniser le script ».',
       nomFiche: 'scène',
       champs: [
         { cle: 'titre', libelle: 'Scène', type: 'texte', requis: true },
@@ -54,8 +78,7 @@
         { cle: 'ordre', libelle: 'Ordre', type: 'nombre' },
         { cle: 'resume', libelle: 'Résumé', type: 'zone' },
         { cle: 'description', libelle: 'Description de la scène', type: 'zone' },
-        { cle: 'script', libelle: 'Script (déroulé, actions et répliques)', type: 'script' },
-        { cle: 'dialogues', libelle: 'Dialogues', type: 'zone' },
+        { cle: 'script', libelle: 'Script — copie du Drive', type: 'script' },
         { cle: 'decors', libelle: 'Décors', type: 'references', module: 'decors' },
         { cle: 'personnages', libelle: 'Personnages', type: 'references', module: 'personnages' },
         { cle: 'notes', libelle: 'Notes', type: 'zone' },
@@ -63,7 +86,7 @@
       ]
     },
     {
-      id: 'direction', titre: 'Direction artistique', icone: '◐', vue: 'galerie', comparer: true,
+      id: 'direction', section: 'production', titre: 'Direction artistique', icone: '◐', vue: 'galerie', comparer: true,
       description: 'Moodboards, palettes et règles de style. Comparez deux fiches côte à côte.',
       nomFiche: 'fiche de style',
       champs: [
@@ -77,7 +100,7 @@
       ]
     },
     {
-      id: 'personnages', titre: 'Personnages', icone: '☺', vue: 'galerie',
+      id: 'personnages', section: 'production', titre: 'Personnages', icone: '☺', vue: 'galerie',
       description: 'Fiches, sprites, portraits, expressions et animations.',
       nomFiche: 'personnage',
       champs: [
@@ -92,7 +115,7 @@
       ]
     },
     {
-      id: 'decors', titre: 'Décors', icone: '▦', vue: 'galerie',
+      id: 'decors', section: 'production', titre: 'Décors', icone: '▦', vue: 'galerie',
       description: 'Lieux du jeu : images, interactions, éclairage.',
       nomFiche: 'décor',
       champs: [
@@ -107,7 +130,7 @@
       ]
     },
     {
-      id: 'objets', titre: 'Objets', icone: '⚿', vue: 'galerie',
+      id: 'objets', section: 'production', titre: 'Objets', icone: '⚿', vue: 'galerie',
       description: 'Inventaire et objets du décor, avec leurs énigmes et scènes.',
       nomFiche: 'objet',
       champs: [
@@ -121,7 +144,7 @@
       ]
     },
     {
-      id: 'animations', titre: 'Animations', icone: '▶', vue: 'galerie',
+      id: 'animations', section: 'production', titre: 'Animations', icone: '▶', vue: 'galerie',
       description: 'GIF et planches d\'animation (spritesheets).',
       nomFiche: 'animation',
       champs: [
@@ -134,7 +157,7 @@
       ]
     },
     {
-      id: 'gamedesign', titre: 'Game design', icone: '⚙', vue: 'liste', groupe: 'chapitre', dependances: true,
+      id: 'gamedesign', section: 'histoire', titre: 'Game design', icone: '⚙', vue: 'liste', groupe: 'chapitre', dependances: true,
       description: 'Énigmes, dépendances (ce qui doit être fait avant) et déclencheurs.',
       nomFiche: 'énigme',
       champs: [
@@ -150,7 +173,7 @@
       ]
     },
     {
-      id: 'audio', titre: 'Audio', icone: '♫', vue: 'liste', groupe: 'categorie',
+      id: 'audio', section: 'production', titre: 'Audio', icone: '♫', vue: 'liste', groupe: 'categorie',
       description: 'Musiques, ambiances, bruitages et voix, avec lecteur.',
       nomFiche: 'son',
       champs: [
@@ -163,7 +186,7 @@
       ]
     },
     {
-      id: 'developpement', titre: 'Développement', icone: '⌘', vue: 'liste',
+      id: 'developpement', section: 'fabrication', titre: 'Développement', icone: '⌘', vue: 'liste',
       description: 'Missions Claude Code : historique, GitHub et instructions à copier.',
       nomFiche: 'mission',
       champs: [
@@ -178,7 +201,7 @@
       ]
     },
     {
-      id: 'tests', titre: 'Tests', icone: '✓', vue: 'liste', groupe: 'type',
+      id: 'tests', section: 'fabrication', titre: 'Tests', icone: '✓', vue: 'liste', groupe: 'type',
       description: 'Anomalies, validations, captures et versions jouables.',
       nomFiche: 'test',
       champs: [
@@ -192,7 +215,7 @@
       ]
     },
     {
-      id: 'budget', titre: 'Budget', icone: '€', vue: 'budget',
+      id: 'budget', section: 'pilotage', titre: 'Budget', icone: '€', vue: 'budget',
       description: 'Abonnements, dépenses, prévisions, plafond et autorisations.',
       nomFiche: 'ligne de budget',
       champs: [
@@ -234,7 +257,7 @@
   function etatVide() {
     var etat = {
       version: VERSION_DONNEES,
-      projet: { nom: '', genre: '', phase: '', dureeCible: '', moteur: '', resume: '' },
+      projet: { nom: '', genre: '', phase: '', dureeCible: '', moteur: '', scriptDrive: '', resume: '' },
       reglages: { plafondAdditionnel: 0, theme: 'sombre', menuReplie: false },
       outils: [],
       collections: {}
@@ -572,10 +595,109 @@
     return false;
   }
 
+  // ------------------------------------------------------------ Synchronisation du Script
+
+  /*
+   * Lit le Script exporté du Drive (format Markdown) et le découpe :
+   *   « # Prologue … »       → le prologue (cinématique d'introduction) ;
+   *   « ## Étape N — … »     → un chapitre ;
+   *   « ### N. Titre »       → une scène de ce chapitre.
+   * Même règle que Outils/synchroniser_script.py (tâche planifiée).
+   * Renvoie { prologue: texte ou '', chapitres: { N: [[numero, texte], …] } }.
+   */
+  var RE_PROLOGUE = /^#\s+(?:\*\*)?\s*Prologue\b/;
+  var RE_TITRE1 = /^#\s/;
+  var RE_CHAPITRE = /^##\s+(?:\*\*)?\s*Étape\s+(\d+)\b/;
+  var RE_SCENE = /^###\s+(?:\*\*)?\s*(\d+)\.\s/;
+
+  function texteSimple(ligne) {
+    var t = String(ligne).trim();
+    t = t.replace(/^#+\s*/, '');                 // marques de titre
+    t = t.replace(/^[-*]\s+/, '- ');             // puces
+    t = t.split('**').join('');                  // gras
+    t = t.replace(/(?<![\p{L}\p{N}_*])\*(?!\s)(.+?)(?<!\s)\*(?![\p{L}\p{N}_*])/gu, '$1'); // italique
+    t = t.replace(/\\([!\\*_#\[\]().>`-])/g, '$1'); // caractères échappés
+    return t.trim();
+  }
+
+  function assembler(lignes) {
+    // Le titre, une ligne vide, puis le déroulé (même présentation que dans le Manager).
+    var corps = lignes.slice(1).join('\n');
+    return lignes[0] + (corps ? '\n\n' + corps : '');
+  }
+
+  function decouperScript(markdown) {
+    var res = { prologue: '', chapitres: {} };
+    var prologue = null, chapitre = null, scene = null;
+    function fermerPrologue() { if (prologue) res.prologue = assembler(prologue); prologue = null; }
+    String(markdown || '').replace(/\r\n?/g, '\n').split('\n').forEach(function (ligne) {
+      if (RE_PROLOGUE.test(ligne)) { prologue = [texteSimple(ligne)]; chapitre = null; scene = null; return; }
+      if (RE_TITRE1.test(ligne)) { fermerPrologue(); return; }
+      var m = RE_CHAPITRE.exec(ligne);
+      if (m) { fermerPrologue(); chapitre = Number(m[1]); res.chapitres[chapitre] = res.chapitres[chapitre] || []; scene = null; return; }
+      m = RE_SCENE.exec(ligne);
+      if (m && chapitre !== null) { scene = [Number(m[1]), [texteSimple(ligne)]]; res.chapitres[chapitre].push(scene); return; }
+      var t = texteSimple(ligne);
+      if (!t) return;
+      if (prologue) prologue.push(t);
+      else if (scene) scene[1].push(t);
+    });
+    fermerPrologue();
+    Object.keys(res.chapitres).forEach(function (ch) {
+      res.chapitres[ch] = res.chapitres[ch].map(function (s) { return [s[0], assembler(s[1])]; });
+    });
+    return res;
+  }
+
+  /*
+   * Recopie le Script dans le seul champ « script » des scènes du Manager.
+   * Rien d'autre ne change ; aucune fiche n'est créée ni supprimée.
+   * Une scène va dans la fiche « sc-<chapitre>-<numéro> » ; sinon dans la fiche
+   * du chapitre « sc-<chapitre> » ; le prologue va dans la fiche « sc-0 »
+   * ou, à défaut, dans la scène dont le titre parle du cimetière.
+   * Renvoie { changements: [titres], nonTrouvees: [textes] }.
+   */
+  function synchroniserScript(etat, markdown) {
+    var d = decouperScript(markdown);
+    if (!Object.keys(d.chapitres).length) {
+      throw new Error('Ce fichier ne ressemble pas au Script : aucun « Étape 1, 2… » trouvé. Rien n\'a été modifié.');
+    }
+    var fiches = {};
+    etat.collections.scenario.forEach(function (f) { fiches[f.id] = f; });
+    var changements = [], nonTrouvees = [];
+    function mettreAJour(fiche, texte) {
+      if ((fiche.script || '') !== texte) {
+        fiche.script = texte;
+        fiche.modifieLe = maintenant();
+        changements.push(fiche.titre || fiche.id);
+      }
+    }
+    if (d.prologue) {
+      var fp = fiches['sc-0'] || etat.collections.scenario.filter(function (f) { return /cimeti[eè]re/i.test(f.titre || ''); })[0];
+      if (fp) mettreAJour(fp, d.prologue); else nonTrouvees.push('le prologue');
+    }
+    Object.keys(d.chapitres).forEach(function (ch) {
+      var ficheChapitre = fiches['sc-' + ch];
+      var aPart = [];
+      d.chapitres[ch].forEach(function (s) {
+        var f = fiches['sc-' + ch + '-' + s[0]];
+        if (f) mettreAJour(f, s[1]);
+        else if (ficheChapitre) aPart.push(s[1]);
+        else nonTrouvees.push('chapitre ' + ch + ', scène ' + s[0]);
+      });
+      if (ficheChapitre && aPart.length) mettreAJour(ficheChapitre, aPart.join('\n\n'));
+    });
+    return { changements: changements, nonTrouvees: nonTrouvees };
+  }
+
   var API = {
     VERSION_DONNEES: VERSION_DONNEES,
     STATUTS: STATUTS,
     MODULES: MODULES,
+    SECTIONS: SECTIONS,
+    liensScript: liensScript,
+    decouperScript: decouperScript,
+    synchroniserScript: synchroniserScript,
     trouverModule: trouverModule,
     nouvelId: nouvelId,
     etatVide: etatVide,
